@@ -1,0 +1,571 @@
+nextprime
+
+
+
+pub fn next_prime(nbr: u64) -> u64 {
+    // Handle edge cases
+    if nbr <= 2 {
+        return 2;
+    }
+    
+    // Start with the given number, make it odd if it's even
+    let mut candidate = if nbr % 2 == 0 { nbr + 1 } else { nbr };
+    
+    // Check if the current candidate is prime
+    loop {
+        if is_prime(candidate) {
+            return candidate;
+        }
+        candidate += 2; // Only check odd numbers
+    }
+}
+
+fn is_prime(n: u64) -> bool {
+    // Handle small cases
+    if n < 2 {
+        return false;
+    }
+    if n == 2 || n == 3 {
+        return true;
+    }
+    if n % 2 == 0 || n % 3 == 0 {
+        return false;
+    }
+    
+    // Check for divisors of the form 6k ± 1
+    // This is more efficient than checking all odd numbers
+    let mut i = 5;
+    while i * i <= n {
+        if n % i == 0 || n % (i + 2) == 0 {
+            return false;
+        }
+        i += 6;
+    }
+    
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_next_prime() {
+        assert_eq!(next_prime(4), 5);
+        assert_eq!(next_prime(11), 11);
+        assert_eq!(next_prime(1), 2);
+        assert_eq!(next_prime(2), 2);
+        assert_eq!(next_prime(3), 3);
+        assert_eq!(next_prime(13), 13);
+        assert_eq!(next_prime(14), 17);
+        assert_eq!(next_prime(100), 101);
+    }
+
+    #[test]
+    fn test_is_prime() {
+        assert_eq!(is_prime(2), true);
+        assert_eq!(is_prime(3), true);
+        assert_eq!(is_prime(4), false);
+        assert_eq!(is_prime(5), true);
+        assert_eq!(is_prime(17), true);
+        assert_eq!(is_prime(25), false);
+        assert_eq!(is_prime(97), true);
+    }
+}
+
+
+
+prev_prime
+
+
+
+pub fn prev_prime(nbr: u64) -> u64 {
+    // Handle edge cases
+    if nbr < 2 {
+        return 0;
+    }
+    
+    // Check each number from nbr down to 2
+    for candidate in (2..=nbr).rev() {
+        if is_prime(candidate) {
+            return candidate;
+        }
+    }
+    
+    // Should never reach here given our range, but return 0 as fallback
+    0
+}
+
+fn is_prime(n: u64) -> bool {
+    if n < 2 {
+        return false;
+    }
+    if n == 2 {
+        return true;
+    }
+    if n % 2 == 0 {
+        return false;
+    }
+    
+    // Check odd divisors up to sqrt(n)
+    let sqrt_n = (n as f64).sqrt() as u64;
+    for i in (3..=sqrt_n).step_by(2) {
+        if n % i == 0 {
+            return false;
+        }
+    }
+    
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_prev_prime() {
+        assert_eq!(prev_prime(34), 31);
+        assert_eq!(prev_prime(2), 2);
+        assert_eq!(prev_prime(3), 3);
+        assert_eq!(prev_prime(4), 3);
+        assert_eq!(prev_prime(1), 0);
+        assert_eq!(prev_prime(0), 0);
+        assert_eq!(prev_prime(10), 7);
+        assert_eq!(prev_prime(100), 97);
+    }
+}
+
+
+reverse_it
+
+
+pub fn reverse_it(v: i32) -> String {
+    // Handle the sign separately
+    let is_negative = v < 0;
+    let abs_value = v.abs();
+    
+    // Convert to string to reverse the digits
+    let original_str = abs_value.to_string();
+    let reversed_str: String = original_str.chars().rev().collect();
+    
+    // Build the result string
+    let result = format!("{}{}", reversed_str, original_str);
+    
+    // Add negative sign at the beginning if original was negative
+    if is_negative {
+        format!("-{}", result)
+    } else {
+        result
+    }
+}
+
+
+count_factorial_steps
+
+
+pub fn count_factorial_steps(factorial: u64) -> u64 {
+    // Handle special cases: 0! = 1! = 1
+    if factorial == 0 || factorial == 1 {
+        return 0;
+    }
+    
+    // Start checking from 2! onwards
+    let mut current_factorial = 1u64;
+    let mut n = 1u64;
+    
+    // Calculate factorials incrementally until we match or exceed the input
+    while current_factorial < factorial {
+        n += 1;
+        current_factorial = match current_factorial.checked_mul(n) {
+            Some(result) => result,
+            None => return 0, // Overflow occurred, input is too large to be a factorial
+        };
+        
+        if current_factorial == factorial {
+            // Found a match! Return n, which represents that factorial = n!
+            // Based on the examples: 720 = 6! returns 6, 6 = 3! returns 3
+            return n;
+        }
+    }
+    
+    // If we exit the loop without finding a match, it's not a factorial
+    0
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_factorial_steps() {
+        // Test cases from the example
+        assert_eq!(count_factorial_steps(720), 6);  // 6! = 720
+        assert_eq!(count_factorial_steps(13), 0);   // 13 is not a factorial
+        assert_eq!(count_factorial_steps(6), 3);    // 3! = 6
+        
+        // Additional test cases
+        assert_eq!(count_factorial_steps(0), 0);    // Special case
+        assert_eq!(count_factorial_steps(1), 0);    // Special case (both 0! and 1!)
+        assert_eq!(count_factorial_steps(2), 2);    // 2! = 2
+        assert_eq!(count_factorial_steps(24), 4);   // 4! = 24
+        assert_eq!(count_factorial_steps(120), 5);  // 5! = 120
+        assert_eq!(count_factorial_steps(5040), 7); // 7! = 5040
+    }
+}
+
+
+lucas_number
+
+pub fn lucas_number(n: u32) -> u32 {
+    match n {
+        0 => 2,  // L(0) = 2
+        1 => 1,  // L(1) = 1
+        _ => {
+            let mut prev_prev = 2u32;  // L(0)
+            let mut prev = 1u32;       // L(1)
+            
+            for _ in 2..=n {
+                let current = prev + prev_prev;
+                prev_prev = prev;
+                prev = current;
+            }
+            
+            prev
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_lucas_numbers() {
+        // Test the sequence: 2, 1, 3, 4, 7, 11, 18, 29, 47, 76, 123, ...
+        assert_eq!(lucas_number(0), 2);
+        assert_eq!(lucas_number(1), 1);
+        assert_eq!(lucas_number(2), 3);
+        assert_eq!(lucas_number(3), 4);
+        assert_eq!(lucas_number(4), 7);
+        assert_eq!(lucas_number(5), 11);
+        assert_eq!(lucas_number(6), 18);
+        assert_eq!(lucas_number(7), 29);
+        assert_eq!(lucas_number(8), 47);
+        assert_eq!(lucas_number(9), 76);
+        assert_eq!(lucas_number(10), 123);
+        assert_eq!(lucas_number(13), 521);
+    }
+}
+
+// Example usage function that matches the test case
+fn main() {
+    println!("The element in the position {} in Lucas Numbers is {}", 2, lucas_number(2));
+    println!("The element in the position {} in Lucas Numbers is {}", 5, lucas_number(5));
+    println!("The element in the position {} in Lucas Numbers is {}", 10, lucas_number(10));
+    println!("The element in the position {} in Lucas Numbers is {}", 13, lucas_number(13));
+}
+
+
+matrix_determinant
+
+pub fn matrix_determinant(matrix: [[isize; 3]; 3]) -> isize {
+    let [[a, b, c], [d, e, f], [g, h, i]] = matrix;
+    
+    // Calculate 2x2 determinants for cofactor expansion
+    let det_a = e * i - f * h;  // determinant of matrix without row 0, col 0
+    let det_b = d * i - f * g;  // determinant of matrix without row 0, col 1
+    let det_c = d * h - e * g;  // determinant of matrix without row 0, col 2
+    
+    // Apply cofactor expansion: a*det_a - b*det_b + c*det_c
+    a * det_a - b * det_b + c * det_c
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example_matrix() {
+        let matrix = [[1, 2, 4], [2, -1, 3], [4, 0, 1]];
+        assert_eq!(matrix_determinant(matrix), 35);
+    }
+
+    #[test]
+    fn test_identity_matrix() {
+        let matrix = [[1, 0, 0], [0, 1, 0], [0, 0, 1]];
+        assert_eq!(matrix_determinant(matrix), 1);
+    }
+
+    #[test]
+    fn test_zero_determinant() {
+        let matrix = [[1, 2, 3], [2, 4, 6], [1, 1, 1]];
+        assert_eq!(matrix_determinant(matrix), 0);
+    }
+
+    #[test]
+    fn test_negative_determinant() {
+        let matrix = [[2, 1, 3], [1, 0, 1], [1, 2, 1]];
+        assert_eq!(matrix_determinant(matrix), -4);
+    }
+}
+
+
+own_and_return
+
+
+pub struct Film {
+    pub name: String,
+}
+
+// This function takes ownership of the Film and consumes it
+// After calling this function, the Film cannot be used again
+pub fn take_film_name(film: Film) -> String {
+    film.name
+}
+
+// This function borrows the Film without taking ownership
+// The Film can be used again after calling this function
+pub fn read_film_name(film: &Film) -> String {
+    film.name.clone()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_read_film_name() {
+        let my_film = Film { 
+            name: "Terminator".to_string() 
+        };
+        
+        // Can call read_film_name multiple times
+        assert_eq!(read_film_name(&my_film), "Terminator");
+        assert_eq!(read_film_name(&my_film), "Terminator");
+    }
+
+    #[test]
+    fn test_take_film_name() {
+        let my_film = Film { 
+            name: "Terminator".to_string() 
+        };
+        
+        // Can only call take_film_name once - it consumes the film
+        assert_eq!(take_film_name(my_film), "Terminator");
+        // my_film is no longer accessible here
+    }
+
+    #[test]
+    fn test_correct_usage_order() {
+        let my_film = Film { 
+            name: "Terminator".to_string() 
+        };
+        
+        // First read the film name (borrowing)
+        assert_eq!(read_film_name(&my_film), "Terminator");
+        // Then take the film name (consuming)
+        assert_eq!(take_film_name(my_film), "Terminator");
+        // my_film is no longer accessible after this point
+    }
+}
+
+// Example usage that demonstrates the ownership rules
+fn example_usage() {
+    let my_film = Film { 
+        name: "Terminator".to_string() 
+    };
+    
+    // This works - we're borrowing the film
+    println!("{}", read_film_name(&my_film));
+    
+    // This consumes the film - my_film can't be used after this
+    println!("{}", take_film_name(my_film));
+    
+    // This would cause a compile error because my_film was moved:
+    // println!("{}", read_film_name(&my_film));
+}
+
+
+
+check_user_name
+
+pub enum AccessLevel {
+    Guest,
+    Normal,
+    Admin,
+}
+
+pub struct User {
+    name: String,
+    access_level: AccessLevel,
+}
+
+impl User {
+    pub fn new(name: String, level: AccessLevel) -> User {
+        User {
+            name,
+            access_level: level,
+        }
+    }
+
+    pub fn send_name(&self) -> Option<&str> {
+        match self.access_level {
+            AccessLevel::Guest => None,
+            AccessLevel::Normal | AccessLevel::Admin => Some(&self.name),
+        }
+    }
+}
+
+pub fn check_user_name(user: &User) -> (bool, &str) {
+    match user.send_name() {
+        Some(name) => (true, name),
+        None => (false, "ERROR: User is guest"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_admin_user() {
+        let user = User::new("Didier".to_string(), AccessLevel::Admin);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, "Didier"));
+    }
+
+    #[test]
+    fn test_normal_user() {
+        let user = User::new("Mary".to_string(), AccessLevel::Normal);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, "Mary"));
+    }
+
+    #[test]
+    fn test_guest_user() {
+        let user = User::new("John".to_string(), AccessLevel::Guest);
+        let result = check_user_name(&user);
+        assert_eq!(result, (false, "ERROR: User is guest"));
+    }
+}
+
+
+dress_code
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Jacket {
+    Black,
+    White,
+    Flowers,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Hat {
+    Snapback,
+    Baseball,
+    Fedora,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Outfit {
+    pub jacket: Jacket,
+    pub hat: Hat,
+}
+
+pub fn choose_outfit(formality_level: Option<u32>, invitation_message: Result<&str, &str>) -> Outfit {
+    // Handle the special case first: formality_level is None AND invitation_message is not Ok()
+    if formality_level.is_none() && invitation_message.is_err() {
+        return Outfit {
+            jacket: Jacket::Flowers,
+            hat: Hat::Baseball,
+        };
+    }
+    
+    // Determine jacket based on formality_level
+    let jacket = match formality_level {
+        None => Jacket::Flowers,           // formality_level is unset
+        Some(level) if level > 0 => Jacket::White,  // formality_level is more than 0
+        Some(_) => Jacket::Black,          // formality_level is 0 or any other value
+    };
+    
+    // Determine hat based on invitation_message
+    let hat = match invitation_message {
+        Ok(_) => Hat::Fedora,    // invitation_message is Ok()
+        Err(_) => Hat::Snapback, // invitation_message is not Ok()
+    };
+    
+    Outfit { jacket, hat }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    
+    #[test]
+    fn test_example_case() {
+        let result = choose_outfit(Some(0), Ok("Dear friend, ..."));
+        assert_eq!(result, Outfit { jacket: Jacket::Black, hat: Hat::Fedora });
+    }
+    
+    #[test]
+    fn test_special_case() {
+        let result = choose_outfit(None, Err("No invitation"));
+        assert_eq!(result, Outfit { jacket: Jacket::Flowers, hat: Hat::Baseball });
+    }
+    
+    #[test]
+    fn test_formality_none_invitation_ok() {
+        let result = choose_outfit(None, Ok("You're invited"));
+        assert_eq!(result, Outfit { jacket: Jacket::Flowers, hat: Hat::Fedora });
+    }
+    
+    #[test]
+    fn test_formality_high_invitation_err() {
+        let result = choose_outfit(Some(5), Err("No invitation"));
+        assert_eq!(result, Outfit { jacket: Jacket::White, hat: Hat::Snapback });
+    }
+    
+    #[test]
+    fn test_formality_high_invitation_ok() {
+        let result = choose_outfit(Some(3), Ok("Formal invitation"));
+        assert_eq!(result, Outfit { jacket: Jacket::White, hat: Hat::Fedora });
+    }
+}
+
+get_document_id
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ErrorOffice {
+    OfficeClose(u32),
+    OfficeNotFound(u32),
+    OfficeFull(u32),
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeOne {
+    pub next_office: Result<OfficeTwo, ErrorOffice>,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeTwo {
+    pub next_office: Result<OfficeThree, ErrorOffice>,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeThree {
+    pub next_office: Result<OfficeFour, ErrorOffice>,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeFour {
+    pub document_id: Result<u32, ErrorOffice>,
+}
+
+impl OfficeOne {
+    pub fn get_document_id(&self) -> Result<u32, ErrorOffice> {
+        let office_two = self.next_office?;
+        let office_three = office_two.next_office?;
+        let office_four = office_three.next_office?;
+        office_four.document_id
+    }
+}

@@ -1,0 +1,165 @@
+count_factorial_steps
+
+
+pub fn count_factorial_steps(factorial: u64) -> u64 {
+    // Handle special cases
+    if factorial == 0 || factorial == 1 {
+        return 0;
+    }
+
+    let mut n = 1;
+    let mut current_factorial = 1;
+
+    // Calculate factorials incrementally until we find a match or exceed the input
+    while current_factorial < factorial {
+        n += 1;
+        current_factorial *= n;
+    }
+
+    // If we found an exact match, return n (the factorial number)
+    if current_factorial == factorial {
+        n
+    } else {
+        0 // Input is not a factorial
+    }
+}
+
+
+matrix_multiplication
+
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Matrix(pub (i32, i32), pub (i32, i32));
+
+pub fn multiply(m: Matrix, multiplier: i32) -> Matrix {
+    Matrix(
+        (m.0.0 * multiplier, m.0.1 * multiplier),
+        (m.1.0 * multiplier, m.1.1 * multiplier)
+    )
+}
+
+
+min_and_max
+
+pub fn min_and_max(nb_1: i32, nb_2: i32, nb_3: i32) -> (i32, i32) {
+    let min = nb_1.min(nb_2).min(nb_3);
+    let max = nb_1.max(nb_2).max(nb_3);
+    (min, max)
+}
+
+
+counting_words
+
+use std::collections::HashMap;
+
+pub fn counting_words(words: &str) -> HashMap<String, u32> {
+    let mut word_count = HashMap::new();
+    
+    for word in words.split_whitespace() {
+        // Remove all punctuation except apostrophes
+        let cleaned: String = word.chars()
+            .filter(|c| c.is_alphanumeric() || *c == '\'')
+            .collect();
+        
+        // Skip empty strings
+        if !cleaned.is_empty() {
+            *word_count.entry(cleaned.to_lowercase()).or_insert(0) += 1;
+        }
+    }
+    
+    word_count
+}
+
+
+
+modify_letter
+
+pub fn remove_letter_sensitive(s: &str, letter: char) -> String {
+    s.chars().filter(|&c| c != letter).collect()
+}
+
+pub fn remove_letter_insensitive(s: &str, letter: char) -> String {
+    s.chars().filter(|&c| c.to_ascii_lowercase() != letter.to_ascii_lowercase()).collect()
+}
+
+pub fn swap_letter_case(s: &str, letter: char) -> String {
+    s.chars().map(|c| {
+        if c.to_ascii_lowercase() == letter.to_ascii_lowercase() {
+            if c.is_ascii_lowercase() {
+                c.to_ascii_uppercase()
+            } else {
+                c.to_ascii_lowercase()
+            }
+        } else {
+            c
+        }
+    }).collect()
+}
+
+
+reverse_it
+
+pub fn reverse_it(v: i32) -> String {
+    let abs_v = v.abs();
+    let reversed: String = abs_v.to_string().chars().rev().collect();
+    
+    if v >= 0 {
+        format!("{}{}", reversed, abs_v)
+    } else {
+        format!("-{}{}", reversed, abs_v)
+    }
+}
+
+smallest
+
+use std::collections::HashMap;
+
+pub fn smallest(h: HashMap<&str, i32>) -> i32 {
+    *h.values().min().unwrap_or(&i32::MAX)
+}
+
+
+use std::collections::HashMap;
+
+pub fn counting_words(words: &str) -> HashMap<String, u32> {
+    let mut word_count = HashMap::new();
+    
+    for word in words.split_whitespace() {
+        // First, remove all punctuation except apostrophes
+        let temp: String = word.chars()
+            .filter(|c| c.is_alphanumeric() || *c == '\'')
+            .collect();
+        
+        // Then, remove apostrophes that are at the beginning or end
+        // Only keep apostrophes that are surrounded by alphanumeric characters
+        let cleaned = clean_apostrophes(&temp);
+        
+        // Skip empty strings
+        if !cleaned.is_empty() {
+            *word_count.entry(cleaned.to_lowercase()).or_insert(0) += 1;
+        }
+    }
+    
+    word_count
+}
+
+fn clean_apostrophes(word: &str) -> String {
+    let chars: Vec<char> = word.chars().collect();
+    let mut result = String::new();
+    
+    for (i, &ch) in chars.iter().enumerate() {
+        if ch == '\'' {
+            // Keep the apostrophe only if it's between alphanumeric characters
+            let has_alnum_before = i > 0 && chars[i-1].is_alphanumeric();
+            let has_alnum_after = i < chars.len() - 1 && chars[i+1].is_alphanumeric();
+            
+            if has_alnum_before && has_alnum_after {
+                result.push(ch);
+            }
+        } else {
+            result.push(ch);
+        }
+    }
+    
+    result
+}

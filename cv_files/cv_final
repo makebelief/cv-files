@@ -1,0 +1,1589 @@
+counting_words
+
+use std::collections::HashMap;
+
+fn counting_words(words: &str) -> HashMap<String, u32> {
+    let mut word_count = HashMap::new();
+    
+    // Split by whitespace and process each token
+    for token in words.split_whitespace() {
+        // Clean the token by removing punctuation except apostrophes within words
+        let cleaned = clean_word(token);
+        
+        if !cleaned.is_empty() {
+            // Convert to lowercase for case-insensitive counting
+            let word = cleaned.to_lowercase();
+            *word_count.entry(word).or_insert(0) += 1;
+        }
+    }
+    
+    word_count
+}
+
+fn clean_word(word: &str) -> String {
+    let mut result = String::new();
+    let chars: Vec<char> = word.chars().collect();
+    
+    for (i, &ch) in chars.iter().enumerate() {
+        if ch.is_alphanumeric() {
+            result.push(ch);
+        } else if ch == '\'' {
+            // Keep apostrophe only if it's between alphanumeric characters
+            if i > 0 && i < chars.len() - 1 && 
+               chars[i-1].is_alphanumeric() && chars[i+1].is_alphanumeric() {
+                result.push(ch);
+            }
+        }
+        // All other punctuation is ignored
+    }
+    
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_basic_counting() {
+        let result = counting_words("Hello, world!");
+        assert_eq!(result.get("hello"), Some(&1));
+        assert_eq!(result.get("world"), Some(&1));
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_case_insensitive() {
+        let result = counting_words("Batman, BATMAN, batman, Stop stop");
+        assert_eq!(result.get("batman"), Some(&3));
+        assert_eq!(result.get("stop"), Some(&2));
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_apostrophes() {
+        let result = counting_words("it's they're don't can't");
+        assert_eq!(result.get("it's"), Some(&1));
+        assert_eq!(result.get("they're"), Some(&1));
+        assert_eq!(result.get("don't"), Some(&1));
+        assert_eq!(result.get("can't"), Some(&1));
+    }
+
+    #[test]
+    fn test_numbers() {
+        let result = counting_words("1 22 333 4444");
+        assert_eq!(result.get("1"), Some(&1));
+        assert_eq!(result.get("22"), Some(&1));
+        assert_eq!(result.get("333"), Some(&1));
+        assert_eq!(result.get("4444"), Some(&1));
+    }
+
+    #[test]
+    fn test_complex_quote() {
+        let result = counting_words("\"Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.\" ― Albert Einstein");
+        assert_eq!(result.get("two"), Some(&1));
+        assert_eq!(result.get("things"), Some(&1));
+        assert_eq!(result.get("are"), Some(&1));
+        assert_eq!(result.get("infinite"), Some(&1));
+        assert_eq!(result.get("the"), Some(&2));
+        assert_eq!(result.get("universe"), Some(&2));
+        assert_eq!(result.get("and"), Some(&2));
+        assert_eq!(result.get("human"), Some(&1));
+        assert_eq!(result.get("stupidity"), Some(&1));
+        assert_eq!(result.get("i'm"), Some(&1));
+        assert_eq!(result.get("not"), Some(&1));
+        assert_eq!(result.get("sure"), Some(&1));
+        assert_eq!(result.get("about"), Some(&1));
+        assert_eq!(result.get("albert"), Some(&1));
+        assert_eq!(result.get("einstein"), Some(&1));
+    }
+
+    #[test]
+    fn test_empty_string() {
+        let result = counting_words("");
+        assert_eq!(result.len(), 0);
+    }
+
+    #[test]
+    fn test_only_punctuation() {
+        let result = counting_words("!@#$%^&*()");
+        assert_eq!(result.len(), 0);
+    }
+}
+
+// Example usage function
+fn main() {
+    println!("{:?}", counting_words("Hello, world!"));
+    println!("{:?}", counting_words("\"Two things are infinite: the universe and human stupidity; and I'm not sure about the universe.\" ― Albert Einstein"));
+    println!("{:?}", counting_words("Batman, BATMAN, batman, Stop stop"));
+}
+
+inv_pyramid
+
+fn inv_pyramid(v: String, i: u32) -> Vec<String> {
+    let mut result = Vec::new();
+    
+    // Handle edge case where i is 0
+    if i == 0 {
+        return result;
+    }
+    
+    // First half: ascending pyramid (1 to i)
+    for level in 1..=i {
+        let spaces = " ".repeat(level as usize);
+        let chars = v.repeat(level as usize);
+        result.push(format!("{}{}", spaces, chars));
+    }
+    
+    // Second half: descending pyramid (i-1 down to 1)
+    for level in (1..i).rev() {
+        let spaces = " ".repeat(level as usize);
+        let chars = v.repeat(level as usize);
+        result.push(format!("{}{}", spaces, chars));
+    }
+    
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_pyramid_size_1() {
+        let result = inv_pyramid(String::from("#"), 1);
+        assert_eq!(result, vec![" #"]);
+    }
+
+    #[test]
+    fn test_pyramid_size_2() {
+        let result = inv_pyramid(String::from("a"), 2);
+        assert_eq!(result, vec![" a", "  aa", " a"]);
+    }
+
+    #[test]
+    fn test_pyramid_size_5() {
+        let result = inv_pyramid(String::from(">"), 5);
+        let expected = vec![
+            " >",
+            "  >>",
+            "   >>>",
+            "    >>>>",
+            "     >>>>>",
+            "    >>>>",
+            "   >>>",
+            "  >>",
+            " >"
+        ];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_pyramid_size_3() {
+        let result = inv_pyramid(String::from("*"), 3);
+        let expected = vec![
+            " *",
+            "  **",
+            "   ***",
+            "  **",
+            " *"
+        ];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_empty_string() {
+        let result = inv_pyramid(String::from(""), 3);
+        let expected = vec![
+            " ",
+            "  ",
+            "   ",
+            "  ",
+            " "
+        ];
+        assert_eq!(result, expected);
+    }
+
+    #[test]
+    fn test_pyramid_size_0() {
+        let result = inv_pyramid(String::from("x"), 0);
+        assert_eq!(result, Vec::<String>::new());
+    }
+
+    #[test]
+    fn test_multi_char_string() {
+        let result = inv_pyramid(String::from("ab"), 2);
+        let expected = vec![
+            " ab",
+            "  abab",
+            " ab"
+        ];
+        assert_eq!(result, expected);
+    }
+}
+
+// Example usage
+fn main() {
+    let a = inv_pyramid(String::from("#"), 1);
+    let b = inv_pyramid(String::from("a"), 2);
+    let c = inv_pyramid(String::from(">"), 5);
+    let d = inv_pyramid(String::from("&"), 8);
+
+    println!("Pyramid with '#' and size 1:");
+    for v in a.iter() {
+        println!("{:?}", v);
+    }
+    
+    println!("\nPyramid with 'a' and size 2:");
+    for v in b.iter() {
+        println!("{:?}", v);
+    }
+    
+    println!("\nPyramid with '>' and size 5:");
+    for v in c.iter() {
+        println!("{:?}", v);
+    }
+    
+    println!("\nPyramid with '&' and size 8:");
+    for v in d.iter() {
+        println!("{:?}", v);
+    }
+}
+
+nextprime
+
+pub fn next_prime(nbr: u64) -> u64 {
+    // Handle edge cases for small numbers
+    if nbr <= 2 {
+        return 2;
+    }
+    
+    // Start with the given number, but ensure it's odd (except for 2)
+    let mut candidate = if nbr % 2 == 0 { nbr + 1 } else { nbr };
+    
+    // Check each odd number until we find a prime
+    loop {
+        if is_prime(candidate) {
+            return candidate;
+        }
+        candidate += 2; // Only check odd numbers
+    }
+}
+
+fn is_prime(n: u64) -> bool {
+    // Handle small cases
+    if n < 2 {
+        return false;
+    }
+    if n == 2 || n == 3 {
+        return true;
+    }
+    if n % 2 == 0 || n % 3 == 0 {
+        return false;
+    }
+    
+    // Check for divisors of the form 6k ± 1 up to √n
+    // This optimization is based on the fact that all primes > 3
+    // can be expressed in the form 6k ± 1
+    let sqrt_n = (n as f64).sqrt() as u64;
+    let mut i = 5;
+    
+    while i <= sqrt_n {
+        if n % i == 0 || n % (i + 2) == 0 {
+            return false;
+        }
+        i += 6;
+    }
+    
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_small_numbers() {
+        assert_eq!(next_prime(0), 2);
+        assert_eq!(next_prime(1), 2);
+        assert_eq!(next_prime(2), 2);
+        assert_eq!(next_prime(3), 3);
+        assert_eq!(next_prime(4), 5);
+        assert_eq!(next_prime(5), 5);
+    }
+
+    #[test]
+    fn test_given_examples() {
+        assert_eq!(next_prime(4), 5);
+        assert_eq!(next_prime(11), 11);
+    }
+
+    #[test]
+    fn test_larger_primes() {
+        assert_eq!(next_prime(100), 101);
+        assert_eq!(next_prime(101), 101);
+        assert_eq!(next_prime(102), 103);
+        assert_eq!(next_prime(200), 211);
+    }
+
+    #[test]
+    fn test_even_numbers() {
+        assert_eq!(next_prime(10), 11);
+        assert_eq!(next_prime(20), 23);
+        assert_eq!(next_prime(50), 53);
+    }
+
+    #[test]
+    fn test_consecutive_primes() {
+        assert_eq!(next_prime(7), 7);
+        assert_eq!(next_prime(8), 11);
+        assert_eq!(next_prime(13), 13);
+        assert_eq!(next_prime(14), 17);
+        assert_eq!(next_prime(17), 17);
+        assert_eq!(next_prime(18), 19);
+        assert_eq!(next_prime(19), 19);
+        assert_eq!(next_prime(20), 23);
+    }
+
+    #[test]
+    fn test_is_prime_function() {
+        // Test some known primes
+        assert!(is_prime(2));
+        assert!(is_prime(3));
+        assert!(is_prime(5));
+        assert!(is_prime(7));
+        assert!(is_prime(11));
+        assert!(is_prime(13));
+        assert!(is_prime(17));
+        assert!(is_prime(19));
+        assert!(is_prime(23));
+        assert!(is_prime(97));
+        assert!(is_prime(101));
+        
+        // Test some known non-primes
+        assert!(!is_prime(0));
+        assert!(!is_prime(1));
+        assert!(!is_prime(4));
+        assert!(!is_prime(6));
+        assert!(!is_prime(8));
+        assert!(!is_prime(9));
+        assert!(!is_prime(10));
+        assert!(!is_prime(15));
+        assert!(!is_prime(21));
+        assert!(!is_prime(25));
+        assert!(!is_prime(100));
+    }
+
+    #[test]
+    fn test_large_numbers() {
+        // Test with larger numbers to ensure efficiency
+        assert_eq!(next_prime(1000), 1009);
+        assert_eq!(next_prime(10000), 10007);
+    }
+}
+
+// Example usage
+fn main() {
+    println!("The next prime after 4 is: {}", next_prime(4));
+    println!("The next prime after 11 is: {}", next_prime(11));
+    
+    // Additional examples
+    println!("The next prime after 100 is: {}", next_prime(100));
+    println!("The next prime after 1000 is: {}", next_prime(1000));
+}
+
+
+partial_sums
+
+
+pub fn parts_sums(arr: &[u64]) -> Vec<u64> {
+    let mut result = Vec::with_capacity(arr.len() + 1);
+    
+    // Start with the sum of the entire array
+    let mut current_sum: u64 = arr.iter().sum();
+    result.push(current_sum);
+    
+    // For each element from right to left, subtract it from current sum
+    // This gives us the sum of progressively smaller left partitions
+    for &element in arr.iter().rev() {
+        current_sum -= element;
+        result.push(current_sum);
+    }
+    
+    result
+}
+
+// Alternative implementation using the straightforward approach
+// (less efficient but more readable)
+pub fn parts_sums_straightforward(arr: &[u64]) -> Vec<u64> {
+    let mut result = Vec::with_capacity(arr.len() + 1);
+    
+    // Calculate sum for each partition from full array down to empty
+    for i in (0..=arr.len()).rev() {
+        let sum: u64 = arr[..i].iter().sum();
+        result.push(sum);
+    }
+    
+    result
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example_case() {
+        let input = [1, 2, 3, 4, 5];
+        let expected = vec![15, 10, 6, 3, 1, 0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_given_example() {
+        let input = [5, 18, 3, 23];
+        let expected = vec![49, 26, 23, 5, 0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_empty_array() {
+        let input = [];
+        let expected = vec![0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_single_element() {
+        let input = [42];
+        let expected = vec![42, 0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_two_elements() {
+        let input = [10, 20];
+        let expected = vec![30, 20, 0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_zeros() {
+        let input = [0, 0, 0];
+        let expected = vec![0, 0, 0, 0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_large_numbers() {
+        let input = [1000, 2000, 3000];
+        let expected = vec![6000, 3000, 1000, 0];
+        assert_eq!(parts_sums(&input), expected);
+    }
+
+    #[test]
+    fn test_compare_implementations() {
+        let test_cases = vec![
+            vec![1, 2, 3, 4, 5],
+            vec![5, 18, 3, 23],
+            vec![],
+            vec![42],
+            vec![10, 20],
+            vec![0, 0, 0],
+            vec![1000, 2000, 3000],
+        ];
+
+        for case in test_cases {
+            let result1 = parts_sums(&case);
+            let result2 = parts_sums_straightforward(&case);
+            assert_eq!(result1, result2, "Results differ for input: {:?}", case);
+        }
+    }
+
+    #[test]
+    fn test_step_by_step_example() {
+        let input = [1, 2, 3, 4, 5];
+        let result = parts_sums(&input);
+        
+        // Verify each step:
+        // [1, 2, 3, 4, 5] = 15
+        assert_eq!(result[0], 15);
+        // [1, 2, 3, 4] = 10
+        assert_eq!(result[1], 10);
+        // [1, 2, 3] = 6
+        assert_eq!(result[2], 6);
+        // [1, 2] = 3
+        assert_eq!(result[3], 3);
+        // [1] = 1
+        assert_eq!(result[4], 1);
+        // [] = 0
+        assert_eq!(result[5], 0);
+    }
+}
+
+// Example usage
+fn main() {
+    println!(
+        "Partial sums of [5, 18, 3, 23] is : {:?}",
+        parts_sums(&[5, 18, 3, 23])
+    );
+    
+    // Additional examples
+    println!(
+        "Partial sums of [1, 2, 3, 4, 5] is : {:?}",
+        parts_sums(&[1, 2, 3, 4, 5])
+    );
+    
+    println!(
+        "Partial sums of [] is : {:?}",
+        parts_sums(&[])
+    );
+    
+    println!(
+        "Partial sums of [42] is : {:?}",
+        parts_sums(&[42])
+    );
+}
+
+
+prev_prime
+
+pub fn prev_prime(nbr: u64) -> u64 {
+    // Handle edge cases
+    if nbr < 2 {
+        return 0; // No primes less than 2
+    }
+    if nbr == 2 {
+        return 2; // 2 is the smallest prime
+    }
+    
+    // Start with the given number, but ensure it's odd (except for 2)
+    let mut candidate = if nbr % 2 == 0 { nbr - 1 } else { nbr };
+    
+    // Check each odd number going backwards until we find a prime
+    while candidate >= 3 {
+        if is_prime(candidate) {
+            return candidate;
+        }
+        candidate -= 2; // Only check odd numbers
+    }
+    
+    // If we've checked all odd numbers >= 3 and none are prime,
+    // return 2 (the only even prime)
+    2
+}
+
+fn is_prime(n: u64) -> bool {
+    // Handle small cases
+    if n < 2 {
+        return false;
+    }
+    if n == 2 || n == 3 {
+        return true;
+    }
+    if n % 2 == 0 || n % 3 == 0 {
+        return false;
+    }
+    
+    // Check for divisors of the form 6k ± 1 up to √n
+    // This optimization is based on the fact that all primes > 3
+    // can be expressed in the form 6k ± 1
+    let sqrt_n = (n as f64).sqrt() as u64;
+    let mut i = 5;
+    
+    while i <= sqrt_n {
+        if n % i == 0 || n % (i + 2) == 0 {
+            return false;
+        }
+        i += 6;
+    }
+    
+    true
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_given_example() {
+        assert_eq!(prev_prime(34), 31);
+    }
+
+    #[test]
+    fn test_small_numbers() {
+        assert_eq!(prev_prime(0), 0);
+        assert_eq!(prev_prime(1), 0);
+        assert_eq!(prev_prime(2), 2);
+        assert_eq!(prev_prime(3), 3);
+        assert_eq!(prev_prime(4), 3);
+        assert_eq!(prev_prime(5), 5);
+        assert_eq!(prev_prime(6), 5);
+        assert_eq!(prev_prime(7), 7);
+    }
+
+    #[test]
+    fn test_prime_inputs() {
+        // When input is already prime, should return the same number
+        assert_eq!(prev_prime(2), 2);
+        assert_eq!(prev_prime(3), 3);
+        assert_eq!(prev_prime(5), 5);
+        assert_eq!(prev_prime(7), 7);
+        assert_eq!(prev_prime(11), 11);
+        assert_eq!(prev_prime(13), 13);
+        assert_eq!(prev_prime(17), 17);
+        assert_eq!(prev_prime(19), 19);
+        assert_eq!(prev_prime(23), 23);
+    }
+
+    #[test]
+    fn test_composite_inputs() {
+        assert_eq!(prev_prime(4), 3);
+        assert_eq!(prev_prime(6), 5);
+        assert_eq!(prev_prime(8), 7);
+        assert_eq!(prev_prime(9), 7);
+        assert_eq!(prev_prime(10), 7);
+        assert_eq!(prev_prime(12), 11);
+        assert_eq!(prev_prime(14), 13);
+        assert_eq!(prev_prime(15), 13);
+        assert_eq!(prev_prime(16), 13);
+        assert_eq!(prev_prime(18), 17);
+        assert_eq!(prev_prime(20), 19);
+        assert_eq!(prev_prime(21), 19);
+        assert_eq!(prev_prime(22), 19);
+    }
+
+    #[test]
+    fn test_larger_numbers() {
+        assert_eq!(prev_prime(100), 97);
+        assert_eq!(prev_prime(101), 101); // 101 is prime
+        assert_eq!(prev_prime(102), 101);
+        assert_eq!(prev_prime(200), 199);
+        assert_eq!(prev_prime(1000), 997);
+    }
+
+    #[test]
+    fn test_even_numbers() {
+        assert_eq!(prev_prime(30), 29);
+        assert_eq!(prev_prime(32), 31);
+        assert_eq!(prev_prime(50), 47);
+        assert_eq!(prev_prime(100), 97);
+    }
+
+    #[test]
+    fn test_consecutive_cases() {
+        // Test around known prime gaps
+        assert_eq!(prev_prime(24), 23);
+        assert_eq!(prev_prime(25), 23);
+        assert_eq!(prev_prime(26), 23);
+        assert_eq!(prev_prime(27), 23);
+        assert_eq!(prev_prime(28), 23);
+        assert_eq!(prev_prime(29), 29);
+    }
+
+    #[test]
+    fn test_is_prime_function() {
+        // Test some known primes
+        assert!(is_prime(2));
+        assert!(is_prime(3));
+        assert!(is_prime(5));
+        assert!(is_prime(7));
+        assert!(is_prime(11));
+        assert!(is_prime(13));
+        assert!(is_prime(17));
+        assert!(is_prime(19));
+        assert!(is_prime(23));
+        assert!(is_prime(29));
+        assert!(is_prime(31));
+        assert!(is_prime(97));
+        assert!(is_prime(101));
+        
+        // Test some known non-primes
+        assert!(!is_prime(0));
+        assert!(!is_prime(1));
+        assert!(!is_prime(4));
+        assert!(!is_prime(6));
+        assert!(!is_prime(8));
+        assert!(!is_prime(9));
+        assert!(!is_prime(10));
+        assert!(!is_prime(12));
+        assert!(!is_prime(15));
+        assert!(!is_prime(21));
+        assert!(!is_prime(25));
+        assert!(!is_prime(100));
+    }
+
+    #[test]
+    fn test_edge_cases_around_2() {
+        // Special handling around the smallest prime
+        assert_eq!(prev_prime(2), 2);
+        assert_eq!(prev_prime(3), 3);
+        assert_eq!(prev_prime(4), 3);
+    }
+}
+
+// Example usage
+fn main() {
+    println!("The previous prime number before 34 is: {}", prev_prime(34));
+    
+    // Additional examples
+    println!("The previous prime number before 2 is: {}", prev_prime(2));
+    println!("The previous prime number before 1 is: {}", prev_prime(1));
+    println!("The previous prime number before 100 is: {}", prev_prime(100));
+    println!("The previous prime number before 101 is: {}", prev_prime(101));
+}
+
+reverse_it
+
+pub fn reverse_it(v: i32) -> String {
+    // Handle the case of 0 separately
+    if v == 0 {
+        return "00".to_string();
+    }
+    
+    // Determine if the number is negative
+    let is_negative = v < 0;
+    
+    // Work with the absolute value to reverse the digits
+    let abs_v = v.abs();
+    
+    // Convert to string and reverse the digits
+    let original_digits = abs_v.to_string();
+    let reversed_digits: String = original_digits.chars().rev().collect();
+    
+    // Build the result string
+    if is_negative {
+        format!("-{}{}", reversed_digits, abs_v)
+    } else {
+        format!("{}{}", reversed_digits, v)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_given_examples() {
+        assert_eq!(reverse_it(123), "321123");
+        assert_eq!(reverse_it(-123), "-321123");
+    }
+
+    #[test]
+    fn test_positive_numbers() {
+        assert_eq!(reverse_it(1), "11");
+        assert_eq!(reverse_it(12), "2112");
+        assert_eq!(reverse_it(1234), "43211234");
+        assert_eq!(reverse_it(9876), "67899876");
+    }
+
+    #[test]
+    fn test_negative_numbers() {
+        assert_eq!(reverse_it(-1), "-11");
+        assert_eq!(reverse_it(-12), "-2112");
+        assert_eq!(reverse_it(-1234), "-43211234");
+        assert_eq!(reverse_it(-9876), "-67899876");
+    }
+
+    #[test]
+    fn test_zero() {
+        assert_eq!(reverse_it(0), "00");
+    }
+
+    #[test]
+    fn test_single_digit() {
+        assert_eq!(reverse_it(5), "55");
+        assert_eq!(reverse_it(-7), "-77");
+        assert_eq!(reverse_it(9), "99");
+    }
+
+    #[test]
+    fn test_numbers_with_trailing_zeros() {
+        // When reversed, leading zeros are dropped in the numeric representation
+        // but we're working with string reversal, so they should be preserved
+        assert_eq!(reverse_it(120), "021120");
+        assert_eq!(reverse_it(1000), "00011000");
+        assert_eq!(reverse_it(-1200), "-00211200");
+    }
+
+    #[test]
+    fn test_palindromes() {
+        assert_eq!(reverse_it(121), "121121");
+        assert_eq!(reverse_it(1221), "12211221");
+        assert_eq!(reverse_it(-131), "-131131");
+    }
+
+    #[test]
+    fn test_large_numbers() {
+        assert_eq!(reverse_it(123456789), "987654321123456789");
+        assert_eq!(reverse_it(-987654321), "-123456789987654321");
+    }
+
+    #[test]
+    fn test_edge_cases() {
+        // Test minimum and maximum values that fit comfortably
+        assert_eq!(reverse_it(i32::MAX), format!("{}{}", i32::MAX.to_string().chars().rev().collect::<String>(), i32::MAX));
+        assert_eq!(reverse_it(i32::MIN), format!("-{}{}", i32::MIN.abs().to_string().chars().rev().collect::<String>(), i32::MIN.abs()));
+    }
+}
+
+// Example usage
+fn main() {
+    println!("{}", reverse_it(123));
+    println!("{}", reverse_it(-123));
+    
+    // Additional examples
+    println!("{}", reverse_it(0));
+    println!("{}", reverse_it(1));
+    println!("{}", reverse_it(-1));
+    println!("{}", reverse_it(1000));
+    println!("{}", reverse_it(-1000));
+}
+
+check_user_name
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum AccessLevel {
+    Guest,
+    Normal,
+    Admin,
+}
+
+#[derive(Debug, Clone)]
+pub struct User {
+    name: String,
+    access_level: AccessLevel,
+}
+
+impl User {
+    pub fn new(name: String, level: AccessLevel) -> User {
+        User {
+            name,
+            access_level: level,
+        }
+    }
+
+    pub fn send_name(&self) -> Option<&str> {
+        match self.access_level {
+            AccessLevel::Guest => None,
+            AccessLevel::Normal | AccessLevel::Admin => Some(&self.name),
+        }
+    }
+}
+
+pub fn check_user_name(user: &User) -> (bool, &str) {
+    match user.send_name() {
+        Some(name) => (true, name),
+        None => (false, "ERROR: User is guest"),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_access_level_creation() {
+        let guest = AccessLevel::Guest;
+        let normal = AccessLevel::Normal;
+        let admin = AccessLevel::Admin;
+        
+        assert_eq!(guest, AccessLevel::Guest);
+        assert_eq!(normal, AccessLevel::Normal);
+        assert_eq!(admin, AccessLevel::Admin);
+    }
+
+    #[test]
+    fn test_user_creation() {
+        let user = User::new("Alice".to_string(), AccessLevel::Admin);
+        assert_eq!(user.name, "Alice");
+        assert_eq!(user.access_level, AccessLevel::Admin);
+    }
+
+    #[test]
+    fn test_send_name_admin() {
+        let user = User::new("Didier".to_string(), AccessLevel::Admin);
+        assert_eq!(user.send_name(), Some("Didier"));
+    }
+
+    #[test]
+    fn test_send_name_normal() {
+        let user = User::new("Mary".to_string(), AccessLevel::Normal);
+        assert_eq!(user.send_name(), Some("Mary"));
+    }
+
+    #[test]
+    fn test_send_name_guest() {
+        let user = User::new("John".to_string(), AccessLevel::Guest);
+        assert_eq!(user.send_name(), None);
+    }
+
+    #[test]
+    fn test_check_user_name_admin() {
+        let user = User::new("Didier".to_string(), AccessLevel::Admin);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, "Didier"));
+    }
+
+    #[test]
+    fn test_check_user_name_normal() {
+        let user = User::new("Mary".to_string(), AccessLevel::Normal);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, "Mary"));
+    }
+
+    #[test]
+    fn test_check_user_name_guest() {
+        let user = User::new("John".to_string(), AccessLevel::Guest);
+        let result = check_user_name(&user);
+        assert_eq!(result, (false, "ERROR: User is guest"));
+    }
+
+    #[test]
+    fn test_various_names() {
+        let users = vec![
+            ("Alice", AccessLevel::Admin),
+            ("Bob", AccessLevel::Normal),
+            ("Charlie", AccessLevel::Guest),
+            ("Diana", AccessLevel::Admin),
+            ("Eve", AccessLevel::Normal),
+            ("Frank", AccessLevel::Guest),
+        ];
+
+        for (name, level) in users {
+            let user = User::new(name.to_string(), level.clone());
+            let result = check_user_name(&user);
+            
+            match level {
+                AccessLevel::Guest => {
+                    assert_eq!(result, (false, "ERROR: User is guest"));
+                }
+                AccessLevel::Normal | AccessLevel::Admin => {
+                    assert_eq!(result, (true, name));
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_empty_name() {
+        let user = User::new("".to_string(), AccessLevel::Normal);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, ""));
+    }
+
+    #[test]
+    fn test_long_name() {
+        let long_name = "A".repeat(100);
+        let user = User::new(long_name.clone(), AccessLevel::Admin);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, &long_name));
+    }
+
+    #[test]
+    fn test_special_characters_in_name() {
+        let special_name = "José-María_123!@#";
+        let user = User::new(special_name.to_string(), AccessLevel::Normal);
+        let result = check_user_name(&user);
+        assert_eq!(result, (true, special_name));
+    }
+}
+
+// Example usage
+fn main() {
+    let user0 = User::new("Didier".to_string(), AccessLevel::Admin);
+    println!("{:?}", check_user_name(&user0));
+
+    let user1 = User::new("Mary".to_string(), AccessLevel::Normal);
+    println!("{:?}", check_user_name(&user1));
+
+    let user2 = User::new("John".to_string(), AccessLevel::Guest);
+    println!("{:?}", check_user_name(&user2));
+    
+    // Additional examples
+    println!("\nAdditional examples:");
+    let user3 = User::new("Alice".to_string(), AccessLevel::Admin);
+    println!("Admin user: {:?}", check_user_name(&user3));
+    
+    let user4 = User::new("Bob".to_string(), AccessLevel::Normal);
+    println!("Normal user: {:?}", check_user_name(&user4));
+    
+    let user5 = User::new("Guest123".to_string(), AccessLevel::Guest);
+    println!("Guest user: {:?}", check_user_name(&user5));
+}
+
+dress_code
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Jacket {
+    Black,
+    White,
+    Flowers,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Hat {
+    Snapback,
+    Baseball,
+    Fedora,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct Outfit {
+    pub jacket: Jacket,
+    pub hat: Hat,
+}
+
+pub fn choose_outfit(formality_level: Option<u32>, invitation_message: Result<&str, &str>) -> Outfit {
+    // Handle the special case first: None formality_level and Err invitation_message
+    if formality_level.is_none() && invitation_message.is_err() {
+        return Outfit {
+            jacket: Jacket::Flowers,
+            hat: Hat::Baseball,
+        };
+    }
+    
+    // Determine jacket based on formality_level
+    let jacket = match formality_level {
+        None => Jacket::Flowers,           // formality_level is unset
+        Some(level) if level > 0 => Jacket::White,  // formality_level is more than 0
+        Some(_) => Jacket::Black,          // formality_level is 0 or other values <= 0
+    };
+    
+    // Determine hat based on invitation_message
+    let hat = match invitation_message {
+        Ok(_) => Hat::Fedora,
+        Err(_) => Hat::Snapback,
+    };
+    
+    Outfit { jacket, hat }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_some_zero_ok_message() {
+        // Test case from the example
+        let outfit = choose_outfit(Some(0), Ok("Dear friend, ..."));
+        assert_eq!(outfit, Outfit { jacket: Jacket::Black, hat: Hat::Fedora });
+    }
+
+    #[test]
+    fn test_none_err_message() {
+        // Special case: None formality_level and Err invitation_message
+        let outfit = choose_outfit(None, Err("No invitation"));
+        assert_eq!(outfit, Outfit { jacket: Jacket::Flowers, hat: Hat::Baseball });
+    }
+
+    #[test]
+    fn test_none_ok_message() {
+        // None formality_level with Ok message (not the special case)
+        let outfit = choose_outfit(None, Ok("You're invited"));
+        assert_eq!(outfit, Outfit { jacket: Jacket::Flowers, hat: Hat::Fedora });
+    }
+
+    #[test]
+    fn test_some_positive_ok_message() {
+        // Positive formality_level with Ok message
+        let outfit = choose_outfit(Some(5), Ok("Formal invitation"));
+        assert_eq!(outfit, Outfit { jacket: Jacket::White, hat: Hat::Fedora });
+    }
+
+    #[test]
+    fn test_some_positive_err_message() {
+        // Positive formality_level with Err message
+        let outfit = choose_outfit(Some(3), Err("No message"));
+        assert_eq!(outfit, Outfit { jacket: Jacket::White, hat: Hat::Snapback });
+    }
+
+    #[test]
+    fn test_some_zero_err_message() {
+        // Zero formality_level with Err message
+        let outfit = choose_outfit(Some(0), Err("Error"));
+        assert_eq!(outfit, Outfit { jacket: Jacket::Black, hat: Hat::Snapback });
+    }
+}
+
+get_document_id
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub enum ErrorOffice {
+    OfficeClose(u32),
+    OfficeNotFound(u32),
+    OfficeFull(u32),
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeOne {
+    pub next_office: Result<OfficeTwo, ErrorOffice>,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeTwo {
+    pub next_office: Result<OfficeThree, ErrorOffice>,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeThree {
+    pub next_office: Result<OfficeFour, ErrorOffice>,
+}
+
+#[derive(PartialEq, Eq, Clone, Copy)]
+pub struct OfficeFour {
+    pub document_id: Result<u32, ErrorOffice>,
+}
+
+impl OfficeOne {
+    pub fn get_document_id(&self) -> Result<u32, ErrorOffice> {
+        // Use the ? operator to propagate errors through the chain
+        let office_two = self.next_office?;
+        let office_three = office_two.next_office?;
+        let office_four = office_three.next_office?;
+        office_four.document_id
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_successful_chain() {
+        let office_ok = OfficeOne {
+            next_office: Ok(OfficeTwo {
+                next_office: Ok(OfficeThree {
+                    next_office: Ok(OfficeFour {
+                        document_id: Ok(13),
+                    }),
+                }),
+            }),
+        };
+
+        assert_eq!(office_ok.get_document_id(), Ok(13));
+    }
+
+    #[test]
+    fn test_error_at_office_two() {
+        let office_closed = OfficeOne {
+            next_office: Ok(OfficeTwo {
+                next_office: Err(ErrorOffice::OfficeClose(23)),
+            }),
+        };
+
+        assert_eq!(office_closed.get_document_id(), Err(ErrorOffice::OfficeClose(23)));
+    }
+
+    #[test]
+    fn test_error_at_office_one() {
+        let office_not_found = OfficeOne {
+            next_office: Err(ErrorOffice::OfficeNotFound(1)),
+        };
+
+        assert_eq!(office_not_found.get_document_id(), Err(ErrorOffice::OfficeNotFound(1)));
+    }
+
+    #[test]
+    fn test_error_at_office_three() {
+        let office_full = OfficeOne {
+            next_office: Ok(OfficeTwo {
+                next_office: Ok(OfficeThree {
+                    next_office: Err(ErrorOffice::OfficeFull(3)),
+                }),
+            }),
+        };
+
+        assert_eq!(office_full.get_document_id(), Err(ErrorOffice::OfficeFull(3)));
+    }
+
+    #[test]
+    fn test_error_at_document_id() {
+        let document_error = OfficeOne {
+            next_office: Ok(OfficeTwo {
+                next_office: Ok(OfficeThree {
+                    next_office: Ok(OfficeFour {
+                        document_id: Err(ErrorOffice::OfficeClose(4)),
+                    }),
+                }),
+            }),
+        };
+
+        assert_eq!(document_error.get_document_id(), Err(ErrorOffice::OfficeClose(4)));
+    }
+}
+
+negative_spelling
+
+pub fn negative_spell(n: i64) -> String {
+    if n >= 0 {
+        return "error: positive number".to_string();
+    }
+    
+    // Convert to positive for processing
+    let num = -n;
+    
+    format!("minus {}", spell_positive(num))
+}
+
+fn spell_positive(n: i64) -> String {
+    if n == 0 {
+        return "zero".to_string();
+    }
+    
+    let ones = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", 
+                "seventeen", "eighteen", "nineteen"];
+    
+    let tens = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+    
+    if n < 20 {
+        return ones[n as usize].to_string();
+    } else if n < 100 {
+        let ten = n / 10;
+        let one = n % 10;
+        if one == 0 {
+            return tens[ten as usize].to_string();
+        } else {
+            return format!("{}-{}", tens[ten as usize], ones[one as usize]);
+        }
+    } else if n < 1000 {
+        let hundred = n / 100;
+        let remainder = n % 100;
+        let mut result = format!("{} hundred", ones[hundred as usize]);
+        if remainder > 0 {
+            result.push_str(&format!(" {}", spell_positive(remainder)));
+        }
+        return result;
+    } else if n < 1000000 {
+        let thousand = n / 1000;
+        let remainder = n % 1000;
+        let mut result = format!("{} thousand", spell_positive(thousand));
+        if remainder > 0 {
+            result.push_str(&format!(" {}", spell_positive(remainder)));
+        }
+        return result;
+    } else if n == 1000000 {
+        return "one million".to_string();
+    }
+    
+    // Should not reach here for valid input
+    "".to_string()
+}
+
+queens
+
+#[derive(Debug)]
+pub struct ChessPosition {
+    pub rank: i32,
+    pub file: i32,
+}
+
+#[derive(Debug)]
+pub struct Queen {
+    pub position: ChessPosition,
+}
+
+impl ChessPosition {
+    pub fn new(rank: i32, file: i32) -> Option<Self> {
+        // Check if the position is within the valid chessboard bounds (0-7)
+        if rank >= 0 && rank <= 7 && file >= 0 && file <= 7 {
+            Some(ChessPosition { rank, file })
+        } else {
+            None
+        }
+    }
+}
+
+impl Queen {
+    pub fn new(position: ChessPosition) -> Self {
+        Queen { position }
+    }
+
+    pub fn can_attack(&self, other: &Queen) -> bool {
+        let self_rank = self.position.rank;
+        let self_file = self.position.file;
+        let other_rank = other.position.rank;
+        let other_file = other.position.file;
+
+        // Queens can attack each other if they are on:
+        // 1. Same rank (row)
+        // 2. Same file (column)
+        // 3. Same diagonal (absolute difference of ranks equals absolute difference of files)
+        
+        self_rank == other_rank ||  // Same rank
+        self_file == other_file ||  // Same file
+        (self_rank - other_rank).abs() == (self_file - other_file).abs()  // Same diagonal
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_valid_positions() {
+        assert!(ChessPosition::new(0, 0).is_some());
+        assert!(ChessPosition::new(7, 7).is_some());
+        assert!(ChessPosition::new(3, 4).is_some());
+    }
+
+    #[test]
+    fn test_invalid_positions() {
+        assert!(ChessPosition::new(-1, 0).is_none());
+        assert!(ChessPosition::new(0, -1).is_none());
+        assert!(ChessPosition::new(8, 0).is_none());
+        assert!(ChessPosition::new(0, 8).is_none());
+    }
+
+    #[test]
+    fn test_queens_can_attack_same_rank() {
+        let queen1 = Queen::new(ChessPosition::new(2, 3).unwrap());
+        let queen2 = Queen::new(ChessPosition::new(2, 6).unwrap());
+        assert!(queen1.can_attack(&queen2));
+    }
+
+    #[test]
+    fn test_queens_can_attack_same_file() {
+        let queen1 = Queen::new(ChessPosition::new(2, 3).unwrap());
+        let queen2 = Queen::new(ChessPosition::new(5, 3).unwrap());
+        assert!(queen1.can_attack(&queen2));
+    }
+
+    #[test]
+    fn test_queens_can_attack_diagonal() {
+        let queen1 = Queen::new(ChessPosition::new(2, 3).unwrap());
+        let queen2 = Queen::new(ChessPosition::new(5, 6).unwrap());
+        assert!(queen1.can_attack(&queen2));
+    }
+
+    #[test]
+    fn test_queens_cannot_attack() {
+        let queen1 = Queen::new(ChessPosition::new(1, 2).unwrap());
+        let queen2 = Queen::new(ChessPosition::new(0, 4).unwrap());
+        assert!(!queen1.can_attack(&queen2));
+    }
+}
+
+rpn
+
+use std::env;
+
+fn rpn(expression: &str) {
+    // Split the expression by whitespace and filter out empty strings
+    let tokens: Vec<&str> = expression.split_whitespace().collect();
+    
+    // Empty expression is invalid
+    if tokens.is_empty() {
+        println!("Error");
+        return;
+    }
+    
+    let mut stack: Vec<i64> = Vec::new();
+    
+    for token in tokens {
+        match token {
+            "+" | "-" | "*" | "/" | "%" => {
+                // Need at least 2 operands for binary operations
+                if stack.len() < 2 {
+                    println!("Error");
+                    return;
+                }
+                
+                // Pop two operands (note: order matters for - and /)
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                
+                let result = match token {
+                    "+" => a + b,
+                    "-" => a - b,
+                    "*" => a * b,
+                    "/" => {
+                        if b == 0 {
+                            println!("Error");
+                            return;
+                        }
+                        a / b
+                    },
+                    "%" => {
+                        if b == 0 {
+                            println!("Error");
+                            return;
+                        }
+                        a % b
+                    },
+                    _ => unreachable!()
+                };
+                
+                stack.push(result);
+            }
+            _ => {
+                // Try to parse as a number
+                match token.parse::<i64>() {
+                    Ok(num) => stack.push(num),
+                    Err(_) => {
+                        println!("Error");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    
+    // After evaluation, there should be exactly one value left on the stack
+    if stack.len() == 1 {
+        println!("{}", stack[0]);
+    } else {
+        println!("Error");
+    }
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    
+    if args.len() != 2 {
+        println!("Error");
+        return;
+    }
+    
+    rpn(&args[1]);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::process::{Command, Stdio};
+
+    fn run_rpn(input: &str) -> String {
+        let output = Command::new("cargo")
+            .arg("run")
+            .arg("--")
+            .arg(input)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null())
+            .output()
+            .expect("Failed to run command");
+        
+        String::from_utf8(output.stdout).unwrap().trim().to_string()
+    }
+
+    #[test]
+    fn test_simple_addition() {
+        // Test: 3 + 4 = 7
+        assert_eq!(run_rpn("3 4 +"), "7");
+    }
+
+    #[test]
+    fn test_complex_expression() {
+        // Test: 1 2 * 3 * 4 + = ((1*2)*3)+4 = 6+4 = 10
+        assert_eq!(run_rpn("1 2 * 3 * 4 +"), "10");
+    }
+
+    #[test]
+    fn test_with_spaces() {
+        // Test: extra spaces should be handled
+        assert_eq!(run_rpn("     1      3 * 2 -"), "1");
+    }
+
+    #[test]
+    fn test_invalid_expression() {
+        // Test: insufficient operands
+        assert_eq!(run_rpn("1 2 3 4 +"), "Error");
+    }
+
+    #[test]
+    fn test_empty_expression() {
+        assert_eq!(run_rpn(""), "Error");
+    }
+
+    #[test]
+    fn test_invalid_token() {
+        assert_eq!(run_rpn("1 3 * ksd 2 -"), "Error");
+    }
+}
+
+scytale_cipher
+
+pub fn scytale_decoder(s: String, letters_per_turn: u32) -> Option<String> {
+    // Return None for empty string or 0 letters per turn
+    if s.is_empty() || letters_per_turn == 0 {
+        return None;
+    }
+    
+    let chars: Vec<char> = s.chars().collect();
+    let len = chars.len();
+    let letters_per_turn = letters_per_turn as usize;
+    
+    // Calculate number of complete rows and handle remainder
+    let num_rows = (len + letters_per_turn - 1) / letters_per_turn; // Ceiling division
+    
+    let mut result = Vec::new();
+    
+    // Read column by column
+    for col in 0..letters_per_turn {
+        for row in 0..num_rows {
+            let index = row * letters_per_turn + col;
+            if index < len {
+                result.push(chars[index]);
+            }
+        }
+    }
+    
+    Some(result.into_iter().collect())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_example_1() {
+        let result = scytale_decoder("sec yCtoadle".to_string(), 2);
+        assert_eq!(result, Some("scytale Code".to_string()));
+    }
+
+    #[test]
+    fn test_example_2() {
+        let result = scytale_decoder("steoca dylCe".to_string(), 4);
+        assert_eq!(result, Some("scytale Code".to_string()));
+    }
+
+    #[test]
+    fn test_empty_string() {
+        let result = scytale_decoder("".to_string(), 2);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_zero_letters_per_turn() {
+        let result = scytale_decoder("hello".to_string(), 0);
+        assert_eq!(result, None);
+    }
+
+    #[test]
+    fn test_single_character() {
+        let result = scytale_decoder("a".to_string(), 1);
+        assert_eq!(result, Some("a".to_string()));
+    }
+
+    #[test]
+    fn test_letters_per_turn_equals_length() {
+        let result = scytale_decoder("hello".to_string(), 5);
+        assert_eq!(result, Some("hello".to_string()));
+    }
+
+    #[test]
+    fn test_letters_per_turn_greater_than_length() {
+        let result = scytale_decoder("hi".to_string(), 5);
+        assert_eq!(result, Some("hi".to_string()));
+    }
+
+    #[test]
+    fn test_simple_case() {
+        // "abcd" with letters_per_turn = 2 should become:
+        // a b
+        // c d
+        // Reading column-wise: a c b d
+        let result = scytale_decoder("acbd".to_string(), 2);
+        assert_eq!(result, Some("abcd".to_string()));
+    }
+}
