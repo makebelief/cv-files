@@ -1587,3 +1587,492 @@ mod tests {
         assert_eq!(result, Some("abcd".to_string()));
     }
 }
+
+
+blood_types_s
+
+#[derive(Debug, PartialEq, Eq, Clone, PartialOrd, Ord)]
+pub enum Antigen {
+    A,
+    AB,
+    B,
+    O,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub enum RhFactor {
+    Positive,
+    Negative,
+}
+
+#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone)]
+pub struct BloodType {
+    pub antigen: Antigen,
+    pub rh_factor: RhFactor,
+}
+
+impl BloodType {
+    pub fn can_receive_from(&self, other: &Self) -> bool {
+        match (&self.antigen, &self.rh_factor, &other.antigen, &other.rh_factor) {
+            // A+ can receive from A+, A-, O+, O-
+            (Antigen::A, RhFactor::Positive, Antigen::A, _) => true,
+            (Antigen::A, RhFactor::Positive, Antigen::O, _) => true,
+            
+            // A- can receive from A-, O-
+            (Antigen::A, RhFactor::Negative, Antigen::A, RhFactor::Negative) => true,
+            (Antigen::A, RhFactor::Negative, Antigen::O, RhFactor::Negative) => true,
+            
+            // B+ can receive from B+, B-, O+, O-
+            (Antigen::B, RhFactor::Positive, Antigen::B, _) => true,
+            (Antigen::B, RhFactor::Positive, Antigen::O, _) => true,
+            
+            // B- can receive from B-, O-
+            (Antigen::B, RhFactor::Negative, Antigen::B, RhFactor::Negative) => true,
+            (Antigen::B, RhFactor::Negative, Antigen::O, RhFactor::Negative) => true,
+            
+            // AB+ can receive from everyone
+            (Antigen::AB, RhFactor::Positive, _, _) => true,
+            
+            // AB- can receive from AB-, A-, B-, O-
+            (Antigen::AB, RhFactor::Negative, Antigen::AB, RhFactor::Negative) => true,
+            (Antigen::AB, RhFactor::Negative, Antigen::A, RhFactor::Negative) => true,
+            (Antigen::AB, RhFactor::Negative, Antigen::B, RhFactor::Negative) => true,
+            (Antigen::AB, RhFactor::Negative, Antigen::O, RhFactor::Negative) => true,
+            
+            // O+ can receive from O+, O-
+            (Antigen::O, RhFactor::Positive, Antigen::O, _) => true,
+            
+            // O- can receive from O-
+            (Antigen::O, RhFactor::Negative, Antigen::O, RhFactor::Negative) => true,
+            
+            // All other combinations are false
+            _ => false,
+        }
+    }
+
+    pub fn donors(&self) -> Vec<Self> {
+        let all_blood_types = vec![
+            BloodType { antigen: Antigen::A, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::A, rh_factor: RhFactor::Negative },
+            BloodType { antigen: Antigen::B, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::B, rh_factor: RhFactor::Negative },
+            BloodType { antigen: Antigen::AB, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::AB, rh_factor: RhFactor::Negative },
+            BloodType { antigen: Antigen::O, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::O, rh_factor: RhFactor::Negative },
+        ];
+
+        all_blood_types
+            .into_iter()
+            .filter(|blood_type| self.can_receive_from(blood_type))
+            .collect()
+    }
+
+    pub fn recipients(&self) -> Vec<Self> {
+        let all_blood_types = vec![
+            BloodType { antigen: Antigen::A, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::A, rh_factor: RhFactor::Negative },
+            BloodType { antigen: Antigen::B, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::B, rh_factor: RhFactor::Negative },
+            BloodType { antigen: Antigen::AB, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::AB, rh_factor: RhFactor::Negative },
+            BloodType { antigen: Antigen::O, rh_factor: RhFactor::Positive },
+            BloodType { antigen: Antigen::O, rh_factor: RhFactor::Negative },
+        ];
+
+        all_blood_types
+            .into_iter()
+            .filter(|blood_type| blood_type.can_receive_from(self))
+            .collect()
+    }
+}
+
+
+office_worker
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct OfficeWorker {
+    pub name: String,
+    pub age: u32,
+    pub role: WorkerRole,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum WorkerRole {
+    Admin,
+    User,
+    Guest,
+}
+
+impl From<&str> for OfficeWorker {
+    fn from(s: &str) -> Self {
+        let parts: Vec<&str> = s.split(',').collect();
+        
+        OfficeWorker {
+            name: parts[0].to_string(),
+            age: parts[1].parse().unwrap(),
+            role: WorkerRole::from(parts[2]),
+        }
+    }
+}
+
+impl From<&str> for WorkerRole {
+    fn from(s: &str) -> Self {
+        match s.to_lowercase().as_str() {
+            "admin" => WorkerRole::Admin,
+            "user" => WorkerRole::User,
+            "guest" => WorkerRole::Guest,
+            _ => panic!("Invalid role"),
+        }
+    }
+}
+
+
+rpn
+
+use std::env;
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    
+    if args.len() != 2 {
+        println!("Error");
+        return;
+    }
+    
+    rpn(&args[1]);
+}
+
+fn rpn(expression: &str) {
+    let tokens: Vec<&str> = expression.split_whitespace().collect();
+    
+    if tokens.is_empty() {
+        println!("Error");
+        return;
+    }
+    
+    let mut stack: Vec<i64> = Vec::new();
+    
+    for token in tokens {
+        match token {
+            "+" | "-" | "*" | "/" | "%" => {
+                if stack.len() < 2 {
+                    println!("Error");
+                    return;
+                }
+                
+                let b = stack.pop().unwrap();
+                let a = stack.pop().unwrap();
+                
+                let result = match token {
+                    "+" => a + b,
+                    "-" => a - b,
+                    "*" => a * b,
+                    "/" => {
+                        if b == 0 {
+                            println!("Error");
+                            return;
+                        }
+                        a / b
+                    }
+                    "%" => {
+                        if b == 0 {
+                            println!("Error");
+                            return;
+                        }
+                        a % b
+                    }
+                    _ => unreachable!(),
+                };
+                
+                stack.push(result);
+            }
+            _ => {
+                // Try to parse as a number
+                match token.parse::<i64>() {
+                    Ok(num) => stack.push(num),
+                    Err(_) => {
+                        println!("Error");
+                        return;
+                    }
+                }
+            }
+        }
+    }
+    
+    // Check if we have exactly one result
+    if stack.len() != 1 {
+        println!("Error");
+        return;
+    }
+    
+    println!("{}", stack[0]);
+}
+
+rot21
+
+pub fn rot21(input: &str) -> String {
+    input
+        .chars()
+        .map(|c| {
+            match c {
+                'a'..='z' => {
+                    // For lowercase letters: rotate 21 positions
+                    let shifted = ((c as u8 - b'a' + 21) % 26) + b'a';
+                    shifted as char
+                }
+                'A'..='Z' => {
+                    // For uppercase letters: rotate 21 positions
+                    let shifted = ((c as u8 - b'A' + 21) % 26) + b'A';
+                    shifted as char
+                }
+                _ => c, // Leave non-alphabetic characters unchanged
+            }
+        })
+        .collect()
+}
+
+
+order_books
+
+
+pub mod library {
+    pub mod writers {
+        use crate::library::books::Book;
+        
+        pub struct Writer {
+            pub first_name: String,
+            pub last_name: String,
+            pub books: Vec<Book>,
+        }
+    }
+    
+    pub mod books {
+        pub struct Book {
+            pub title: String,
+            pub year: u64,
+        }
+    }
+}
+
+pub use library::writers::Writer;
+pub use library::books::Book;
+
+pub fn order_books(writer: &mut Writer) {
+    writer.books.sort_by(|a, b| a.title.cmp(&b.title));
+}
+
+matrix_determinant
+
+pub fn matrix_determinant(matrix: [[isize; 3]; 3]) -> isize {
+    let a = matrix[0][0];
+    let b = matrix[0][1];
+    let c = matrix[0][2];
+    
+    // For element 'a' at (0,0), remove row 0 and column 0
+    // Remaining 2x2 matrix:
+    // |e f|
+    // |h i|
+    let det_a = matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1];
+    
+    // For element 'b' at (0,1), remove row 0 and column 1
+    // Remaining 2x2 matrix:
+    // |d f|
+    // |g i|
+    let det_b = matrix[1][0] * matrix[2][2] - matrix[1][2] * matrix[2][0];
+    
+    // For element 'c' at (0,2), remove row 0 and column 2
+    // Remaining 2x2 matrix:
+    // |d e|
+    // |g h|
+    let det_c = matrix[1][0] * matrix[2][1] - matrix[1][1] * matrix[2][0];
+    
+    // Apply cofactor expansion: a*det_a - b*det_b + c*det_c
+    a * det_a - b * det_b + c * det_c
+}
+
+insertion_sort
+
+pub fn insertion_sort(slice: &mut [i32], steps: usize) {
+    if slice.len() <= 1 {
+        return;
+    }
+    
+    let max_steps = std::cmp::min(steps, slice.len() - 1);
+    
+    for i in 1..=max_steps {
+        let key = slice[i];
+        let mut j = i;
+        
+        // Shift elements to the right while they are greater than key
+        while j > 0 && slice[j - 1] > key {
+            slice[j] = slice[j - 1];
+            j -= 1;
+        }
+        
+        // Insert the key at its correct position
+        slice[j] = key;
+    }
+}
+
+scytale_cipher
+
+pub fn scytale_decoder(s: String, letters_per_turn: u32) -> Option<String> {
+    // Return None if empty string or letters_per_turn is 0
+    if s.is_empty() || letters_per_turn == 0 {
+        return None;
+    }
+    
+    let letters_per_turn = letters_per_turn as usize;
+    let chars: Vec<char> = s.chars().collect();
+    let total_chars = chars.len();
+    
+    // Calculate number of complete rows and columns
+    let num_rows = letters_per_turn;
+    let num_cols = (total_chars + num_rows - 1) / num_rows; // Ceiling division
+    
+    let mut result = Vec::new();
+    
+    // Read row by row to reconstruct the original message
+    for row in 0..num_rows {
+        for col in 0..num_cols {
+            let index = col * num_rows + row;
+            if index < total_chars {
+                result.push(chars[index]);
+            }
+        }
+    }
+    
+    Some(result.into_iter().collect())
+}
+
+
+profanity filter
+
+pub struct Message {
+    pub content: String,
+    pub user: String,
+}
+
+impl Message {
+    pub fn new(ms: String, u: String) -> Message {
+        Message {
+            content: ms,
+            user: u,
+        }
+    }
+    
+    pub fn send_ms(&self) -> Option<&str> {
+        // Return None if content is empty or contains "stupid"
+        if self.content.is_empty() || self.content.contains("stupid") {
+            None
+        } else {
+            Some(&self.content)
+        }
+    }
+}
+
+pub fn check_ms(ms: &Message) -> (bool, &str) {
+    match ms.send_ms() {
+        None => (false, "ERROR: illegal"),
+        Some(content) => (true, content),
+    }
+}
+
+
+prime_checker
+
+#[derive(PartialEq, Eq, Debug)]
+pub enum PrimeErr {
+    Even,
+    Divider(u32),
+}
+
+pub fn prime_checker(nb: u32) -> Option<Result<u32, PrimeErr>> {
+    // Return None if the number is less than or equal to 1
+    if nb <= 1 {
+        return None;
+    }
+    
+    // Special case: 2 is the only even prime number
+    if nb == 2 {
+        return Some(Ok(2));
+    }
+    
+    // Check if the number is even
+    if nb % 2 == 0 {
+        return Some(Err(PrimeErr::Even));
+    }
+    
+    // Check for odd divisors from 3 up to sqrt(nb)
+    let sqrt_nb = (nb as f64).sqrt() as u32;
+    for divisor in (3..=sqrt_nb).step_by(2) {
+        if nb % divisor == 0 {
+            return Some(Err(PrimeErr::Divider(divisor)));
+        }
+    }
+    
+    // If no divisors found, the number is prime
+    Some(Ok(nb))
+}
+
+prev_prime
+
+pub fn prev_prime(nbr: u64) -> u64 {
+    // Helper function to check if a number is prime
+    fn is_prime(n: u64) -> bool {
+        if n <= 1 {
+            return false;
+        }
+        if n == 2 {
+            return true;
+        }
+        if n % 2 == 0 {
+            return false;
+        }
+        
+        let sqrt_n = (n as f64).sqrt() as u64;
+        for divisor in (3..=sqrt_n).step_by(2) {
+            if n % divisor == 0 {
+                return false;
+            }
+        }
+        true
+    }
+    
+    // Start from nbr and work backwards
+    for candidate in (0..=nbr).rev() {
+        if is_prime(candidate) {
+            return candidate;
+        }
+    }
+    
+    // If no prime found, return 0
+    0
+}
+
+partial_sums
+
+pub fn parts_sums(arr: &[u64]) -> Vec<u64> {
+    let mut result = Vec::new();
+    let len = arr.len();
+    
+    // Calculate sum for each partition from full array down to empty array
+    for i in 0..=len {
+        let partition_sum: u64 = arr[0..(len - i)].iter().sum();
+        result.push(partition_sum);
+    }
+    
+    result
+}
+
+
+nextprime
+inv_pyramid
+smallest
+reverse_it
+modify_letter
+counting_words
+min_and_max
+matrix_multiplication
+count_factorial_steps
